@@ -31,8 +31,8 @@ QuadNode* geraQuadtree(Img* pic, float minError)
     GrayPixel (*graypixels)[pic->width] = (GrayPixel(*)[pic->height]) pic->img;
 
 
-    printf("Quantidade de linhas: %d", pic->width);
-    printf("Quantidade de colunas: %d", pic->height);
+    printf("Quantidade de linhas: %d\n", pic->width);
+    printf("Quantidade de colunas: %d\n", pic->height);
     // Tentando colocar a imagem em tons de cinza.
     int i, j;
     for(i=0; i<pic->width; i++)
@@ -51,7 +51,7 @@ QuadNode* geraQuadtree(Img* pic, float minError)
 // COMENTE a linha abaixo quando seu algoritmo ja estiver funcionando
 // Caso contrario, ele ira gerar uma arvore de teste com 3 nodos
 
-// Histograma da região (imagem)
+// Histograma da região
 int histogram[256] = {0};  // Inicializa o histograma com zeros
 
 for (int i = 0; i < pic->width; i++) {
@@ -60,6 +60,12 @@ for (int i = 0; i < pic->width; i++) {
         histogram[grayValue]++;  // Incrementa a frequência do tom de cinza correspondente
     }
 }
+
+// int sum;
+// for (int i=0; i < 256; i++){
+//     printf("quantidade de pixeis com a itensidade igual a %d: %d\n", i, histogram[i]);
+//     sum += histogram[i];
+// }
 
 // printf("Total %d\n", pic->height * pic->width);
 // printf("Total %d\n", sum);
@@ -71,10 +77,13 @@ for (int i = 0; i < pic->width; i++) {
     /* Teste: criando uma raiz e dois nodos a mais              */
     /************************************************************/
 
+    // Precisa-se testar e ver se conseguimos pegar a Média das cores, o histograma e calcular o nível de erro
+    // De cada região, vendo se conseguimos dividir a imagem nisso, pq o fundo ta preto, não sei como fazer
+
     QuadNode* raiz = newNode(0,0,width,height);
     raiz->status = PARCIAL;
-    raiz->color[0] = 0;
-    raiz->color[1] = 0;
+    raiz->color[0] = 255;
+    raiz->color[1] = 255;
     raiz->color[2] = 255;
 
     int meiaLargura = width/2;

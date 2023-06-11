@@ -38,7 +38,7 @@ QuadNode* geraQuadtree(Img* pic, float minError)
     for(i=0; i<pic->width; i++)
          for (j=0; j<pic->height; j++){
             graypixels[i][j].pixel = (0.3 * pixels[i][j].r) + (0.59 * pixels[i][j].g) + (0.11 * pixels[i][j].b);
-            printf("cor do pixel na linha %d e na coluna %d: %d\n", i, j, graypixels[i][j].pixel);
+            // printf("cor do pixel na linha %d e na coluna %d: %d\n", i, j, graypixels[i][j].pixel);
          } 
 
     int width = pic->width;
@@ -50,6 +50,19 @@ QuadNode* geraQuadtree(Img* pic, float minError)
 
 // COMENTE a linha abaixo quando seu algoritmo ja estiver funcionando
 // Caso contrario, ele ira gerar uma arvore de teste com 3 nodos
+
+// Histograma da região (imagem)
+int histogram[256] = {0};  // Inicializa o histograma com zeros
+
+for (int i = 0; i < pic->width; i++) {
+    for (int j = 0; j < pic->height; j++) {
+        int grayValue = graypixels[i][j].pixel;  // Valor de intensidade em escala de cinza
+        histogram[grayValue]++;  // Incrementa a frequência do tom de cinza correspondente
+    }
+}
+
+// printf("Total %d\n", pic->height * pic->width);
+// printf("Total %d\n", sum);
 
 #define DEMO
 #ifdef DEMO

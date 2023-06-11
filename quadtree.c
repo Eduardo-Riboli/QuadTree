@@ -28,11 +28,18 @@ QuadNode* geraQuadtree(Img* pic, float minError)
 {
     // Converte o vetor RGBPixel para uma MATRIZ que pode acessada por pixels[linha][coluna]
     RGBPixel (*pixels)[pic->width] = (RGBPixel(*)[pic->height]) pic->img;
+    GrayPixel (*graypixels)[pic->width] = (GrayPixel(*)[pic->height]) pic->img;
 
-    // Veja como acessar os primeiros 10 pixels da imagem, por exemplo:
-    int i;
-    for(i=0; i<10; i++)
-        printf("%02X %02X %02X\n",pixels[0][i].r,pixels[1][i].g,pixels[2][i].b);
+
+    printf("Quantidade de linhas: %d", pic->width);
+    printf("Quantidade de colunas: %d", pic->height);
+    // Tentando colocar a imagem em tons de cinza.
+    int i, j;
+    for(i=0; i<pic->width; i++)
+         for (j=0; j<pic->height; j++){
+            graypixels[i][j].pixel = (0.3 * pixels[i][j].r) + (0.59 * pixels[i][j].g) + (0.11 * pixels[i][j].b);
+            printf("cor do pixel na linha %d e na coluna %d: %d\n", i, j, graypixels[i][j].pixel);
+         } 
 
     int width = pic->width;
     int height = pic->height;
@@ -71,8 +78,8 @@ QuadNode* geraQuadtree(Img* pic, float minError)
 
     QuadNode* nw2 = newNode(meiaLargura+meiaLargura/2, 0, meiaLargura/2, meiaAltura/2);
     nw2->status = CHEIO;
-    nw2->color[0] = 255;
-    nw2->color[1] = 0;
+    nw2->color[0] = 0;
+    nw2->color[1] = 255;
     nw2->color[2] = 0;
 
     // Aponta do nodo nw para o nodo nw2

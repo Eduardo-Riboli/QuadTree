@@ -24,6 +24,10 @@ typedef struct {
 } RGBPixel;
 
 typedef struct {
+    unsigned char pixel;
+} GrayPixel;
+
+typedef struct {
     int width, height;
     RGBPixel *img;
 } Img;

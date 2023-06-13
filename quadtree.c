@@ -30,7 +30,6 @@ QuadNode* geraQuadtree(Img* pic, float minError)
     RGBPixel (*pixels)[pic->width] = (RGBPixel(*)[pic->height]) pic->img;
     GrayPixel (*graypixels)[pic->width] = (GrayPixel(*)[pic->height]) pic->img;
 
-
     printf("Quantidade de linhas: %d\n", pic->width);
     printf("Quantidade de colunas: %d\n", pic->height);
     // Tentando colocar a imagem em tons de cinza.
@@ -52,23 +51,42 @@ QuadNode* geraQuadtree(Img* pic, float minError)
 // Caso contrario, ele ira gerar uma arvore de teste com 3 nodos
 
 // Histograma da região
-int histogram[256] = {0};  // Inicializa o histograma com zeros
+    int histogram[256] = {0};  // Inicializa o histograma com zeros
 
-for (int i = 0; i < pic->width; i++) {
-    for (int j = 0; j < pic->height; j++) {
-        int grayValue = graypixels[i][j].pixel;  // Valor de intensidade em escala de cinza
-        histogram[grayValue]++;  // Incrementa a frequência do tom de cinza correspondente
+    for (int i = 0; i < pic->width; i++) {
+        for (int j = 0; j < pic->height; j++) {
+            int grayValue = graypixels[i][j].pixel;  // Valor de intensidade em escala de cinza
+            histogram[grayValue]++;  // Incrementa a frequência do tom de cinza correspondente
+        }
     }
-}
 
-// int sum;
-// for (int i=0; i < 256; i++){
-//     printf("quantidade de pixeis com a itensidade igual a %d: %d\n", i, histogram[i]);
-//     sum += histogram[i];
-// }
+    // int sum;
+    // for (int i=0; i < 256; i++){
+    //     printf("quantidade de pixeis com a itensidade igual a %d: %d\n", i, histogram[i]);
+    //     sum += histogram[i];
+    // }
 
-// printf("Total %d\n", pic->height * pic->width);
-// printf("Total %d\n", sum);
+    // printf("Total %d\n", pic->height * pic->width);
+    // printf("Total %d\n", sum);
+
+    int somaRed = 0, somaGreen = 0, somaBlue = 0;
+
+    // Calcula a soma das componentes R, G e B
+    for (int i = 0; i < pic->width; i++) {
+        for (int j = 0; j < pic->height; j++) {
+            somaRed += pixels[i][j].r;
+            somaGreen += pixels[i][j].g;
+            somaBlue += pixels[i][j].b;
+        }
+    }
+
+    int totalPixels = pic->width * pic->height;
+
+    int mediaRed = somaRed / totalPixels;
+    int mediaGreen = somaGreen / totalPixels;
+    int mediaBlue = somaBlue / totalPixels;
+
+    //printf("media dos pixeis: %d: red, %d: verde, %d: azul\n", mediaRed, mediaGreen, mediaBlue);
 
 #define DEMO
 #ifdef DEMO
@@ -100,7 +118,7 @@ for (int i = 0; i < pic->width; i++) {
 
     QuadNode* nw2 = newNode(meiaLargura+meiaLargura/2, 0, meiaLargura/2, meiaAltura/2);
     nw2->status = CHEIO;
-    nw2->color[0] = 0;
+    nw2->color[0] = 255;
     nw2->color[1] = 255;
     nw2->color[2] = 0;
 

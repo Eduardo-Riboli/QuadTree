@@ -24,26 +24,12 @@ QuadNode* newNode(int x, int y, int width, int height)
     return n;
 }
 
-QuadNode* geraQuadtree(Img* pic, float minError)
-{
-    int width = pic->width;
-    int height = pic->height;
+// MÉTOOD RECURSIVO QUE POSSUI OS BGLH DA REGIÃO
+// SE O ERRO FOR MENOR
+// PARA CADA NODO TU CHAMA DE NOVO O MÉTODO RECURSIVO
 
-    // Converte o vetor RGBPixel para uma MATRIZ que pode acessada por pixels[linha][coluna]
-    RGBPixel (*pixels)[width] = (RGBPixel(*)[height]) pic->img;
-    GrayPixel (*graypixels)[width] = (GrayPixel(*)[height]) pic->img;
-
-    printf("Quantidade de linhas: %d\n", width);
-    printf("Quantidade de colunas: %d\n", height);
-    // Tentando colocar a imagem em tons de cinza.
-    int i, j;
-    for(i=0; i<width; i++)
-         for (j=0; j<height; j++){
-            graypixels[i][j].pixel = (0.3 * pixels[i][j].r) + (0.59 * pixels[i][j].g) + (0.11 * pixels[i][j].b);
-            // printf("cor do pixel na linha %d e na coluna %d: %d\n", i, j, graypixels[i][j].pixel);
-         } 
-
-    // Histograma da região
+QuadNode* recursiveQuadrtree(int width, int height, GrayPixel (*graypixels)[width], RGBPixel (*pixels)[width], float error){
+// Histograma da região
     int histogram[256] = {0};  // Inicializa o histograma com zeros
 
     for (int i = 0; i < width; i++) {
@@ -79,7 +65,60 @@ QuadNode* geraQuadtree(Img* pic, float minError)
     int mediaGreen = somaGreen / totalPixels;
     int mediaBlue = somaBlue / totalPixels;
 
+    int sum;
+    // CALCULAR O ERRO
+    for (int i=0; i<256; i++){
+        sum += histogram[i] * i;
+    }
+
+    int intensidadeMedia = sum / (height * width) ;
+
+    // int erroRegiao;
+    // for (int i=0; i<width; i++){
+    //     for (int j=0; j<height; j++){
+    //         erroRegiao += (graypixels[i][j] - intensidadeMedia) ao quadrado / width * height
+    //     }
+    // }
+
     //printf("media dos pixeis: %d: red, %d: verde, %d: azul\n", mediaRed, mediaGreen, mediaBlue);
+
+    // FAZER A RECURSÃO!!!
+    //QuadNode* raiz = newNode(0,0,width,height);
+
+    QuadNode* raiz = newNode(0,0,width,height);
+    raiz->status = PARCIAL;
+    raiz->color[0] = 255;
+    raiz->color[1] = 0;
+    raiz->color[2] = 0;
+
+    return raiz;
+}
+
+
+QuadNode* geraQuadtree(Img* pic, float minError)
+{
+    int width = pic->width;
+    int height = pic->height;
+
+    // Converte o vetor RGBPixel para uma MATRIZ que pode acessada por pixels[linha][coluna]
+    RGBPixel (*pixels)[width] = (RGBPixel(*)[height]) pic->img;
+    GrayPixel (*graypixels)[width] = (GrayPixel(*)[height]) pic->img;
+
+    printf("Quantidade de linhas: %d\n", width);
+    printf("Quantidade de colunas: %d\n", height);
+    // Tentando colocar a imagem em tons de cinza.
+
+    int i, j;
+    for(i=0; i<width; i++)
+         for (j=0; j<height; j++){
+            graypixels[i][j].pixel = (0.3 * pixels[i][j].r) + (0.59 * pixels[i][j].g) + (0.11 * pixels[i][j].b);
+            // printf("cor do pixel na linha %d e na coluna %d: %d\n", i, j, graypixels[i][j].pixel);
+         } 
+
+    QuadNode* raiz = recursiveQuadrtree(width, height, graypixels, pixels, minError);
+    return raiz;
+
+    // CRIA METODO RECURSIVO
 
 #define DEMO
 #ifdef DEMO
@@ -91,36 +130,36 @@ QuadNode* geraQuadtree(Img* pic, float minError)
     // Precisa-se testar e ver se conseguimos pegar a Média das cores, o histograma e calcular o nível de erro
     // De cada região, vendo se conseguimos dividir a imagem nisso, pq o fundo ta preto, não sei como fazer
 
-    QuadNode* raiz = newNode(0,0,width,height);
-    raiz->status = PARCIAL;
-    raiz->color[0] = 255;
-    raiz->color[1] = 255;
-    raiz->color[2] = 255;
+    // QuadNode* raiz = newNode(0,0,width,height);
+    // raiz->status = PARCIAL;
+    // raiz->color[0] = 255;
+    // raiz->color[1] = 0;
+    // raiz->color[2] = 0;
 
-    int meiaLargura = width/2;
-    int meiaAltura = height/2;
+    // int meiaLargura = width/2;
+    // int meiaAltura = height/2;
 
-    QuadNode* nw = newNode(meiaLargura, 0, meiaLargura, meiaAltura);
-    nw->status = PARCIAL;
-    nw->color[0] = 0;
-    nw->color[1] = 0;
-    nw->color[2] = 255;
+    // QuadNode* nw = newNode(meiaLargura, 0, meiaLargura, meiaAltura);
+    // nw->status = PARCIAL;
+    // nw->color[0] = 255;
+    // nw->color[1] = 0;
+    // nw->color[2] = 0;
 
-    // Aponta da raiz para o nodo nw
-    raiz->NW = nw;
+    // // Aponta da raiz para o nodo nw
+    // raiz->NW = nw;
 
-    QuadNode* nw2 = newNode(meiaLargura+meiaLargura/2, 0, meiaLargura/2, meiaAltura/2);
-    nw2->status = CHEIO;
-    nw2->color[0] = 255;
-    nw2->color[1] = 255;
-    nw2->color[2] = 0;
+    // QuadNode* nw2 = newNode(meiaLargura+meiaLargura/2, 0, meiaLargura/2, meiaAltura/2);
+    // nw2->status = CHEIO;
+    // nw2->color[0] = 255;
+    // nw2->color[1] = 255;
+    // nw2->color[2] = 0;
 
-    // Aponta do nodo nw para o nodo nw2
-    nw->NW = nw2;
+    // // Aponta do nodo nw para o nodo nw2
+    // nw->NW = nw2;
 
 #endif
     // Finalmente, retorna a raiz da árvore
-    return raiz;
+    // return raiz;
 }
 
 // Limpa a memória ocupada pela árvore

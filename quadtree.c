@@ -26,35 +26,28 @@ QuadNode* newNode(int x, int y, int width, int height)
 
 QuadNode* geraQuadtree(Img* pic, float minError)
 {
-    // Converte o vetor RGBPixel para uma MATRIZ que pode acessada por pixels[linha][coluna]
-    RGBPixel (*pixels)[pic->width] = (RGBPixel(*)[pic->height]) pic->img;
-    GrayPixel (*graypixels)[pic->width] = (GrayPixel(*)[pic->height]) pic->img;
+    int width = pic->width;
+    int height = pic->height;
 
-    printf("Quantidade de linhas: %d\n", pic->width);
-    printf("Quantidade de colunas: %d\n", pic->height);
+    // Converte o vetor RGBPixel para uma MATRIZ que pode acessada por pixels[linha][coluna]
+    RGBPixel (*pixels)[width] = (RGBPixel(*)[height]) pic->img;
+    GrayPixel (*graypixels)[width] = (GrayPixel(*)[height]) pic->img;
+
+    printf("Quantidade de linhas: %d\n", width);
+    printf("Quantidade de colunas: %d\n", height);
     // Tentando colocar a imagem em tons de cinza.
     int i, j;
-    for(i=0; i<pic->width; i++)
-         for (j=0; j<pic->height; j++){
+    for(i=0; i<width; i++)
+         for (j=0; j<height; j++){
             graypixels[i][j].pixel = (0.3 * pixels[i][j].r) + (0.59 * pixels[i][j].g) + (0.11 * pixels[i][j].b);
             // printf("cor do pixel na linha %d e na coluna %d: %d\n", i, j, graypixels[i][j].pixel);
          } 
 
-    int width = pic->width;
-    int height = pic->height;
-
-    //////////////////////////////////////////////////////////////////////////
-    // Implemente aqui o algoritmo que gera a quadtree, retornando o nodo raiz
-    //////////////////////////////////////////////////////////////////////////
-
-// COMENTE a linha abaixo quando seu algoritmo ja estiver funcionando
-// Caso contrario, ele ira gerar uma arvore de teste com 3 nodos
-
-// Histograma da região
+    // Histograma da região
     int histogram[256] = {0};  // Inicializa o histograma com zeros
 
-    for (int i = 0; i < pic->width; i++) {
-        for (int j = 0; j < pic->height; j++) {
+    for (int i = 0; i < width; i++) {
+        for (int j = 0; j < height; j++) {
             int grayValue = graypixels[i][j].pixel;  // Valor de intensidade em escala de cinza
             histogram[grayValue]++;  // Incrementa a frequência do tom de cinza correspondente
         }
@@ -72,15 +65,15 @@ QuadNode* geraQuadtree(Img* pic, float minError)
     int somaRed = 0, somaGreen = 0, somaBlue = 0;
 
     // Calcula a soma das componentes R, G e B
-    for (int i = 0; i < pic->width; i++) {
-        for (int j = 0; j < pic->height; j++) {
+    for (int i = 0; i < width; i++) {
+        for (int j = 0; j < height; j++) {
             somaRed += pixels[i][j].r;
             somaGreen += pixels[i][j].g;
             somaBlue += pixels[i][j].b;
         }
     }
 
-    int totalPixels = pic->width * pic->height;
+    int totalPixels = width * height;
 
     int mediaRed = somaRed / totalPixels;
     int mediaGreen = somaGreen / totalPixels;

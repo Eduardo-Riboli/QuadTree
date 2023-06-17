@@ -24,10 +24,6 @@ typedef struct {
 } RGBPixel;
 
 typedef struct {
-    unsigned char pixel;
-} GrayPixel;
-
-typedef struct {
     int width, height;
     RGBPixel *img;
 } Img;
@@ -36,6 +32,10 @@ typedef struct Quad QuadNode;
 
 QuadNode* geraQuadtree(Img* img, float minDetail);
 QuadNode* newNode(int x, int y, int width, int height);
+
+QuadNode* recursiveQuadtree(int x, int y, int width, int height, RGBPixel (*pixels)[width], int minError);
+int* calculaHistograma(int x, int y, int width, int height, RGBPixel (*pixels)[width]);
+double calculaErroRegiao(int x, int y, int width, int height, int* histograma);
 
 void clearTree(QuadNode* n);
 void drawTree(QuadNode* raiz);

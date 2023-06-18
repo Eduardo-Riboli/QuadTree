@@ -1,6 +1,7 @@
 #include "quadtree.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
@@ -10,6 +11,7 @@
 
 unsigned int first = 1;
 char desenhaBorda = 1;
+int originalWidth, originalHeight;
 
 QuadNode* newNode(int x, int y, int width, int height)
 {
@@ -41,7 +43,15 @@ QuadNode* geraQuadtree(Img* pic, float minError)
     // Implemente aqui o algoritmo que gera a quadtree, retornando o nodo raiz
     //////////////////////////////////////////////////////////////////////////
 
-    QuadNode* raizInicial = recursiveQuadtree(0, 0, width, height, pixels, minError);
+    originalWidth = width;
+    originalHeight = height;
+
+    QuadNode* raizInicial = newNode(0, 0, width, height);
+
+    recursiveQuadtree(0, 0, width, height, raizInicial, pixels, minError);
+
+    drawTree(raizInicial);
+    writeTree(raizInicial);
 
     return raizInicial;
 // COMENTE a linha abaixo quando seu algoritmo ja estiver funcionando
@@ -83,22 +93,132 @@ QuadNode* geraQuadtree(Img* pic, float minError)
 
 #endif
     // Finalmente, retorna a raiz da árvore
-    // return raizInicial;
+    // return raiz;
 }
 
-QuadNode* recursiveQuadtree(int x, int y, int width, int height, RGBPixel (*pixels)[width], int minError)
+void recursiveQuadtree(int x, int y, int width, int height, QuadNode* raiz, RGBPixel (*pixels)[width], int minError)
 {
-    // Calcula o histograma antes de fazer a divisão
-    int* histograma = calculaHistograma(x, y, width, height, pixels);
-
     // Calcula o erro da região
-    double erroRegiao = calculaErroRegiao(x, y, width, height, histograma);
+    double erroRegiao = calculaErroRegiao(x, y, width, height, pixels);
 
+    int* coresMedias = calculaCoresMedias(x, y, width, height, pixels);
+
+    if (width <= 1 || height <= 1) {
+        raiz->status = CHEIO;
+        raiz->color[0] = coresMedias[0];
+        raiz->color[1] = coresMedias[1];
+        raiz->color[2] = coresMedias[2];
+        return;
+    }
+
+    int meiaLargura = width/2;
+    int meiaAltura = height/2;
+
+
+    if (erroRegiao > minError) {
+        QuadNode* nw = newNode(x, y, meiaLargura, meiaAltura);
+        QuadNode* ne = newNode(meiaLargura, y, meiaLargura, meiaAltura);
+        QuadNode* sw = newNode(x, meiaAltura, meiaLargura, meiaAltura);
+        QuadNode* se = newNode(meiaLargura, meiaAltura, meiaLargura, meiaAltura);
+    
+        raiz->status = PARCIAL;
+        raiz->NW = nw;
+        raiz->NE = ne;
+        raiz->SW = sw;
+        raiz->SE = se;
+
+        recursiveQuadtree(x, y, meiaLargura, meiaAltura, nw, pixels, minError);
+        recursiveQuadtree(meiaLargura, y, meiaLargura, meiaAltura, ne, pixels, minError);
+        recursiveQuadtree(x, meiaAltura, meiaLargura, meiaAltura, sw, pixels, minError);
+        recursiveQuadtree(meiaLargura, meiaAltura, meiaLargura, meiaAltura, se, pixels, minError);
+        return;
+    } else {
+        raiz->status = CHEIO;
+        raiz->color[0] = coresMedias[0];
+        raiz->color[1] = coresMedias[1];
+        raiz->color[2] = coresMedias[2];
+        return;
+    }
+
+    return;
+
+}
+
+double calculaErroRegiao(int x, int y, int width, int height, RGBPixel (*pixels)[width]) {
+
+    // Criando matriz com tamanho variável (Tamanho da imagem)
+    int **gray = (int **)malloc(originalWidth * sizeof(int*));
+    for (int i=0; i<originalWidth; i++) {
+        gray[i] = (int *)malloc(originalHeight * sizeof(int));
+    }
+
+    // Criação do histograma
+    int histograma[256] = {0};
+
+    // Preenchendo a matriz com as cores da região
+    for (int i = 0; i < originalWidth; i++) {         // width + x  NÃO TESTADO
+        for (int j = 0; j < originalHeight; j++) {    // height + y
+            gray[i][j] = (0.3 * pixels[i][j].r) + (0.59 * pixels[i][j].g) + (0.11 * pixels[i][j].b);
+        }
+    }
+
+    // Preenchendo o histograma com valores
+    for (int i = x; i < width + x; i++) {
+        for (int j = y; j< height + y; j++) {
+            histograma[gray[i][j]]++;
+        }
+    }
+
+    // Teste de Histograma
+    // for (int i=0; i<256; i++) {
+    //     if (i==0 || i==254 || i==255) {
+    //         printf("Valor do I: %d || Histograma: %d\n", i, histograma[i]);
+    //     }
+    // }
+
+    // Total de pixeis
+    int totalPixeisRegiao = width * height;
+
+    // Soma das intensidades
+    int somaIntensidades = 0;
+    for (int i=0; i<256; i++) {
+        somaIntensidades += i * histograma[i];
+    }
+
+    // Media das intensidades
+    int mediaIntensidades = somaIntensidades / totalPixeisRegiao;
+
+    // printf("Total de pixels: %d\n", totalPixeisRegiao);
+    // printf("Soma das intensidades: %d\n", somaIntensidades);
+    // printf("Media das intensidades: %d\n", mediaIntensidades);
+
+    // Soma da diferença da intensidade - intensidade média
+    int count = 0;
+    int a = 0;
+    for (int i=x; i < width + x; i++) {
+        for (int j=y; j < height + y; j++) {
+            int intensidade = gray[i][j];
+            a += abs(intensidade-mediaIntensidades);
+            count++;
+        }
+    }
+    // printf("Soma da diferença da intensidade - intensidade média: %d\n", a);
+
+    // Erro da região
+    int erro = a / totalPixeisRegiao;
+    printf("Erro da Região: %d\n", erro);
+
+    // Liberando a matriz da memória
+    free(gray);
+    return erro;
+}
+
+int* calculaCoresMedias(int x, int y, int width, int height, RGBPixel (*pixels)[width]) {
     int somaRed = 0, somaGreen = 0, somaBlue = 0;
 
     // Calcula a soma das componentes R, G e B
-    for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height; j++) {
+    for (int i = x; i < width + x; i++) {
+        for (int j = y; j < height + y; j++) {
             somaRed += pixels[i][j].r;
             somaGreen += pixels[i][j].g;
             somaBlue += pixels[i][j].b;
@@ -111,65 +231,17 @@ QuadNode* recursiveQuadtree(int x, int y, int width, int height, RGBPixel (*pixe
     int mediaGreen = somaGreen / totalPixels;
     int mediaBlue = somaBlue / totalPixels;
 
-
-    QuadNode* raiz = newNode(x, y, width, height);
-
-    if (width <= 1 || height <= 1) {
-        raiz->status = CHEIO;
-        raiz->color[0] = mediaRed;
-        raiz->color[1] = mediaGreen;
-        raiz->color[2] = mediaBlue;
-        return raiz;
-    }
-
-    int meiaLargura = width/2;
-    int meiaAltura = height/2;
-
-    if (erroRegiao > minError) {
-        raiz->status = PARCIAL;
-        raiz->NW = recursiveQuadtree(x, y, meiaLargura, meiaAltura, pixels, minError);
-        raiz->NE = recursiveQuadtree(x + meiaLargura, y, meiaLargura, meiaAltura, pixels, minError);
-        raiz->SW = recursiveQuadtree(x, y + meiaAltura, meiaLargura, meiaAltura, pixels, minError);
-        raiz->SE = recursiveQuadtree(x + meiaLargura, y + meiaAltura, meiaLargura, meiaAltura, pixels, minError);
-        return raiz;
-    } else {
-        raiz->status = CHEIO;
-        raiz->color[0] = mediaRed;
-        raiz->color[1] = mediaGreen;
-        raiz->color[2] = mediaBlue;
-        return raiz;
-    }
-
-    free(histograma);
-    // drawNode(raiz);
-    return raiz;
-
-}
-
-int* calculaHistograma(int x, int y, int width, int height, RGBPixel (*pixels)[width]) {
-    int* histograma = (int*)calloc(256, sizeof(int));
-
-    for (int i = x; i < width; i++) {         // width + x  NÃO TESTADO
-        for (int j = y; j < height; j++) {    // height + y
-            int intensidade = (0.3 * pixels[i][j].r) + (0.59 * pixels[i][j].g) + (0.11 * pixels[i][j].b);
-            histograma[intensidade]++;
-        }
-    }
-
-    // Teste de Histograma
-    for (int i=0; i<256; i++) {
-        if (i==0 || i==254 || i==255) {
-            printf("Valor do I: %d || Histograma: %d\n", i, histograma[i]);
-        }
-    }
-
-    return histograma;
-}
-
-double calculaErroRegiao(int x, int y, int width, int height, int* histograma) {
+    static int corMedia[3] = {0};
+    corMedia[0] = mediaRed;
+    corMedia[1] = mediaGreen;
+    corMedia[2] = mediaBlue;
     
+    // Teste de cores médias
+    // for(int i=0; i<3; i++) {
+    //     printf("Cor média: %d\n", corMedia[i]);
+    // }
 
-    return 0;
+    return corMedia;
 }
 
 // Limpa a memória ocupada pela árvore

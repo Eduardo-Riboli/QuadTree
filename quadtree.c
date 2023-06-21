@@ -11,7 +11,8 @@
 
 unsigned int first = 1;
 char desenhaBorda = 1;
-int originalWidth, originalHeight;
+int originalWidth = 0;
+int originalHeight = 0;
 
 QuadNode* newNode(int x, int y, int width, int height)
 {
@@ -28,219 +29,131 @@ QuadNode* newNode(int x, int y, int width, int height)
 
 QuadNode* geraQuadtree(Img* pic, float minError)
 {
+    int width = pic->width;
+    int height = pic->height;
+    originalWidth = width;
+    originalHeight = height;
     // Converte o vetor RGBPixel para uma MATRIZ que pode acessada por pixels[linha][coluna]
     RGBPixel (*pixels)[pic->width] = (RGBPixel(*)[pic->height]) pic->img;
 
-    // Veja como acessar os primeiros 10 pixels da imagem, por exemplo:
-    // int i;
-    // for(i=0; i<10; i++)
-    //     printf("%02X %02X %02X\n",pixels[0][i].r,pixels[1][i].g,pixels[2][i].b);
-
-    int width = pic->width;
-    int height = pic->height;
-
-    //////////////////////////////////////////////////////////////////////////
-    // Implemente aqui o algoritmo que gera a quadtree, retornando o nodo raiz
-    //////////////////////////////////////////////////////////////////////////
-
-    originalWidth = width;
-    originalHeight = height;
-
-    QuadNode* raizInicial = newNode(0, 0, width, height);
-
-    recursiveQuadtree(0, 0, width, height, raizInicial, pixels, minError);
-
-    drawTree(raizInicial);
-    writeTree(raizInicial);
-
-    return raizInicial;
-// COMENTE a linha abaixo quando seu algoritmo ja estiver funcionando
-// Caso contrario, ele ira gerar uma arvore de teste com 3 nodos
-
-#define DEMO
-#ifdef DEMO
-
-    /************************************************************/
-    /* Teste: criando uma raiz e dois nodos a mais              */
-    /************************************************************/
-
-    // QuadNode* raiz = newNode(0,0,width,height);
-    // raiz->status = PARCIAL;
-    // raiz->color[0] = 0;
-    // raiz->color[1] = 0;
-    // raiz->color[2] = 255;
-
-    // int meiaLargura = width/2;
-    // int meiaAltura = height/2;
-
-    // QuadNode* nw = newNode(meiaLargura, 0, meiaLargura, meiaAltura);
-    // nw->status = PARCIAL;
-    // nw->color[0] = 0;
-    // nw->color[1] = 0;
-    // nw->color[2] = 255;
-
-    // // Aponta da raiz para o nodo nw
-    // raiz->NW = nw;
-
-    // QuadNode* nw2 = newNode(meiaLargura+meiaLargura/2, 0, meiaLargura/2, meiaAltura/2);
-    // nw2->status = CHEIO;
-    // nw2->color[0] = 255;
-    // nw2->color[1] = 0;
-    // nw2->color[2] = 0;
-
-    // // Aponta do nodo nw para o nodo nw2
-    // nw->NW = nw2;
-
-#endif
-    // Finalmente, retorna a raiz da árvore
-    // return raiz;
-}
-
-void recursiveQuadtree(int x, int y, int width, int height, QuadNode* raiz, RGBPixel (*pixels)[width], int minError)
-{
-    // Calcula o erro da região
-    double erroRegiao = calculaErroRegiao(x, y, width, height, pixels);
-
-    int* coresMedias = calculaCoresMedias(x, y, width, height, pixels);
-
-    if (width <= 1 || height <= 1) {
-        raiz->status = CHEIO;
-        raiz->color[0] = coresMedias[0];
-        raiz->color[1] = coresMedias[1];
-        raiz->color[2] = coresMedias[2];
-        return;
+    int grayPixels[originalWidth][originalHeight];
+    for (int i = 0; i < height; i++){
+        for (int j = 0; j < width; j++){
+            // pixels[i][j] = pic->img[i * width + j];
+            grayPixels[i][j] = (0.3 * pixels[i][j].r) + (0.59 * pixels[i][j].g) + (0.11 * pixels[i][j].b);
+        }
     }
 
-    int meiaLargura = width/2;
-    int meiaAltura = height/2;
+    QuadNode* raiz = newNode(0, 0, width, height);
 
+    recursiveQuadtree(width, height, raiz, pixels, grayPixels, minError);
 
-    if (erroRegiao > minError) {
-        QuadNode* nw = newNode(x, y, meiaLargura, meiaAltura);
-        QuadNode* ne = newNode(meiaLargura, y, meiaLargura, meiaAltura);
-        QuadNode* sw = newNode(x, meiaAltura, meiaLargura, meiaAltura);
-        QuadNode* se = newNode(meiaLargura, meiaAltura, meiaLargura, meiaAltura);
-    
-        raiz->status = PARCIAL;
+    return raiz;
+}
+
+void recursiveQuadtree(int width, int height, QuadNode* raiz, RGBPixel pixels[originalWidth][originalHeight], int grayPixels[originalWidth][originalHeight], float minError){
+    int halfWidth = width / 2;
+    int halfHeight = height / 2;
+
+    long erroRegiao = calculaErroRegiao(raiz->x, raiz->y, width, height, grayPixels);
+    RGBPixel corMedia = calculaCorMedia(raiz->x, raiz->y, width, height, pixels);
+
+    raiz->color[0] = corMedia.r;
+    raiz->color[1] = corMedia.g;
+    raiz->color[2] = corMedia.b;
+
+    if (minError < erroRegiao && halfHeight > 0 && halfWidth > 0){
+        QuadNode* nw = newNode(raiz->x, raiz->y, halfWidth, halfHeight);
+        QuadNode* ne = newNode(halfWidth + raiz->x, raiz->y, halfWidth, halfHeight);
+        QuadNode* sw = newNode(raiz->x, halfHeight + raiz->y, halfWidth, halfHeight);
+        QuadNode* se = newNode(halfWidth + raiz->x, halfHeight + raiz->y, halfWidth, halfHeight);
+
         raiz->NW = nw;
         raiz->NE = ne;
         raiz->SW = sw;
         raiz->SE = se;
 
-        recursiveQuadtree(x, y, meiaLargura, meiaAltura, nw, pixels, minError);
-        recursiveQuadtree(meiaLargura, y, meiaLargura, meiaAltura, ne, pixels, minError);
-        recursiveQuadtree(x, meiaAltura, meiaLargura, meiaAltura, sw, pixels, minError);
-        recursiveQuadtree(meiaLargura, meiaAltura, meiaLargura, meiaAltura, se, pixels, minError);
-        return;
-    } else {
+        if (halfHeight == 1 || halfWidth == 1){
+            raiz->NE->status = CHEIO;
+            raiz->NW->status = CHEIO;
+            raiz->SW->status = CHEIO;
+            raiz->SE->status = CHEIO;
+            // printf("red: %d, green: %d, blue: %d]\n", corMedia.r, corMedia.g, corMedia.b);
+            return;
+        }
+
+        raiz->status = PARCIAL; 
+
+        recursiveQuadtree(halfWidth, halfHeight, raiz->NW, pixels, grayPixels, minError);
+        recursiveQuadtree(halfWidth, halfHeight, raiz->NE, pixels, grayPixels, minError);
+        recursiveQuadtree(halfWidth, halfHeight, raiz->SW, pixels, grayPixels, minError);
+        recursiveQuadtree(halfWidth, halfHeight, raiz->SE, pixels, grayPixels, minError);
+    }
+    else {
         raiz->status = CHEIO;
-        raiz->color[0] = coresMedias[0];
-        raiz->color[1] = coresMedias[1];
-        raiz->color[2] = coresMedias[2];
+        raiz->NE = NULL;
+        raiz->NW = NULL;
+        raiz->SE = NULL;
+        raiz->SW = NULL;
         return;
     }
 
-    return;
-
 }
 
-double calculaErroRegiao(int x, int y, int width, int height, RGBPixel (*pixels)[width]) {
-
-    // Criando matriz com tamanho variável (Tamanho da imagem)
-    int **gray = (int **)malloc(originalWidth * sizeof(int*));
-    for (int i=0; i<originalWidth; i++) {
-        gray[i] = (int *)malloc(originalHeight * sizeof(int));
-    }
-
-    // Criação do histograma
-    int histograma[256] = {0};
-
-    // Preenchendo a matriz com as cores da região
-    for (int i = 0; i < originalWidth; i++) {         // width + x  NÃO TESTADO
-        for (int j = 0; j < originalHeight; j++) {    // height + y
-            gray[i][j] = (0.3 * pixels[i][j].r) + (0.59 * pixels[i][j].g) + (0.11 * pixels[i][j].b);
+long calculaErroRegiao(int x, int y, int width, int height, int grayPixels[originalWidth][originalHeight]){
+    int histograma[256] = { 0 };
+    
+    for (int i = y; i < height + y; i++){
+        for (int j = x; j < width + x; j++){
+            histograma[grayPixels[i][j]]++;
         }
     }
 
-    // Preenchendo o histograma com valores
-    for (int i = x; i < width + x; i++) {
-        for (int j = y; j< height + y; j++) {
-            histograma[gray[i][j]]++;
+    long totalPixelsRegiao = width * height;
+
+    long somaIntensidade = 0;
+
+    for (int i = 0; i < 256; i++){
+        somaIntensidade += i * histograma[i];
+    }
+
+    long mediaIntensidade = somaIntensidade / totalPixelsRegiao;
+
+    long erro = 0;
+    for (int i = y; i < height + y; i++){
+        for (int j = x; j < width + x; j++){
+            erro += pow(grayPixels[i][j] - mediaIntensidade, 2);
         }
     }
 
-    // Teste de Histograma
-    // for (int i=0; i<256; i++) {
-    //     if (i==0 || i==254 || i==255) {
-    //         printf("Valor do I: %d || Histograma: %d\n", i, histograma[i]);
-    //     }
-    // }
+    long erroFinal = erro / totalPixelsRegiao;
+    erroFinal = sqrt(erroFinal);
 
-    // Total de pixeis
-    int totalPixeisRegiao = width * height;
-
-    // Soma das intensidades
-    int somaIntensidades = 0;
-    for (int i=0; i<256; i++) {
-        somaIntensidades += i * histograma[i];
-    }
-
-    // Media das intensidades
-    int mediaIntensidades = somaIntensidades / totalPixeisRegiao;
-
-    // printf("Total de pixels: %d\n", totalPixeisRegiao);
-    // printf("Soma das intensidades: %d\n", somaIntensidades);
-    // printf("Media das intensidades: %d\n", mediaIntensidades);
-
-    // Soma da diferença da intensidade - intensidade média
-    int count = 0;
-    int a = 0;
-    for (int i=x; i < width + x; i++) {
-        for (int j=y; j < height + y; j++) {
-            int intensidade = gray[i][j];
-            a += abs(intensidade-mediaIntensidades);
-            count++;
-        }
-    }
-    // printf("Soma da diferença da intensidade - intensidade média: %d\n", a);
-
-    // Erro da região
-    int erro = a / totalPixeisRegiao;
-    printf("Erro da Região: %d\n", erro);
-
-    // Liberando a matriz da memória
-    free(gray);
-    return erro;
+    return erroFinal;
 }
 
-int* calculaCoresMedias(int x, int y, int width, int height, RGBPixel (*pixels)[width]) {
-    int somaRed = 0, somaGreen = 0, somaBlue = 0;
+RGBPixel calculaCorMedia(int x, int y, int width, int height, RGBPixel pixels[originalWidth][originalHeight]){
+   int somaRed = 0, somaGreen = 0, somaBlue = 0, qtdPixels = 0;
 
     // Calcula a soma das componentes R, G e B
-    for (int i = x; i < width + x; i++) {
-        for (int j = y; j < height + y; j++) {
+    for (int i = y; i < height + y; i++) {
+        for (int j = x; j < width + x; j++) {
             somaRed += pixels[i][j].r;
             somaGreen += pixels[i][j].g;
             somaBlue += pixels[i][j].b;
+            qtdPixels++;
         }
     }
+    // qtdPixels = width * height;
 
-    int totalPixels = width * height;
+    int mediaRed = somaRed / qtdPixels;
+    int mediaGreen = somaGreen / qtdPixels;
+    int mediaBlue = somaBlue / qtdPixels;
 
-    int mediaRed = somaRed / totalPixels;
-    int mediaGreen = somaGreen / totalPixels;
-    int mediaBlue = somaBlue / totalPixels;
-
-    static int corMedia[3] = {0};
-    corMedia[0] = mediaRed;
-    corMedia[1] = mediaGreen;
-    corMedia[2] = mediaBlue;
-    
-    // Teste de cores médias
-    // for(int i=0; i<3; i++) {
-    //     printf("Cor média: %d\n", corMedia[i]);
-    // }
-
+    RGBPixel corMedia;
+    corMedia.r = mediaRed;
+    corMedia.g = mediaGreen;
+    corMedia.b = mediaBlue;
     return corMedia;
 }
 

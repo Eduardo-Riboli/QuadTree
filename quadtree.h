@@ -33,9 +33,9 @@ typedef struct Quad QuadNode;
 QuadNode* geraQuadtree(Img* img, float minDetail);
 QuadNode* newNode(int x, int y, int width, int height);
 
-void recursiveQuadtree(int x, int y, int width, int height, QuadNode* raizPai, RGBPixel (*pixels)[width], int minError);
-double calculaErroRegiao(int x, int y, int width, int height, RGBPixel (*pixels)[width]);
-int* calculaCoresMedias(int x, int y, int width, int height, RGBPixel (*pixels)[width]);
+RGBPixel calculaCorMedia(int x, int y, int width, int height, RGBPixel (*pixels)[width]);
+long calculaErroRegiao(int x, int y, int width, int height, int grayPixels[width][height]);
+void recursiveQuadtree(int width, int height, QuadNode* raiz, RGBPixel (*pixels)[width], int grayPixels[width][height], float minError);
 
 void clearTree(QuadNode* n);
 void drawTree(QuadNode* raiz);

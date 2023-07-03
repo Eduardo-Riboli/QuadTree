@@ -11,4 +11,16 @@ Segue exemplos das imagens formadas pelo programa.
 
 Prédio 32:
 
-![Predio32](predio32.jpg)
+<img src="predio32.jpg" width=500 height=300><img src="Predio32-Quadtree.png" width=500 height=300>
+
+Sigil:
+
+<img src="sigil.jpg" width=500 height=400><img src="sigil-Quadtree.png" width=500 height=400>
+
+Prédio 32:
+
+<img src="star.png" width=500 height=400><img src="star-Quadtree.png" width=500 height=400>
+
+Prédio 32:
+
+<img src="cheryl.png" width=500 height=400><img src="cheryl-Quadtree.png" width=500 height=400>
